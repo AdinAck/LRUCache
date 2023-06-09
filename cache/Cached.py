@@ -46,6 +46,22 @@ class _Signature:
         return pair_check
 
 class Cached(LRUCache[_Signature, ValueT]):
+    """
+    Decorator for `LRUCache` for any Callable.
+    
+    Example:
+    ```
+    @Cached(size = 2)
+    def fib(n: int):
+        if n <= 1:
+            return n
+        
+        return fib(n = n - 2) + fib(n = n - 1) # the order of these calls matters. "least recently used"
+    
+    print(fib(100)) # would run forever if not cached
+    ```
+    """
+    
     def __call__(self, f: Cachable) -> Cachable:
         def dispatch(*args: ..., **kwargs: ...) -> ValueT:
             s = _Signature(args, kwargs)
@@ -57,8 +73,6 @@ class Cached(LRUCache[_Signature, ValueT]):
             
         
 if __name__ == '__main__':
-    from rich import print
-    
     @Cached(size = 2)
     def fib(n: int):
         if n <= 1:

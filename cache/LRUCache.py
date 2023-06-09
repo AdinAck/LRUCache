@@ -1,8 +1,6 @@
 """
 LRUCache
 
-A generic, performant LRU cache for use with any hashable key and any value, of a specified size.
-
 Adin Ackerman
 """
 
@@ -16,6 +14,26 @@ ValueT = TypeVar('ValueT')
 
 @dataclass(slots = True)
 class LRUCache(Generic[KeyT, ValueT]):
+    """
+    A generic, performant LRU cache for use with any hashable key and any value, of a specified size.
+    
+    Example:
+    ```
+    cache = LRUCache(size = 2) # we only need to remember two values
+
+    def fib(n: int):
+        if n<= 1:
+            return n
+        
+        if not cache.contains(n):
+            cache.put(n, fib(n - 2) + fib(n - 1)) # the order of these fib calls matters
+        
+        return cache.get(n)
+
+    print(fib(100))
+    ```
+    """
+    
     size: int
     
     itemList: list[KeyT]         = field(default_factory = list, init = False)
@@ -75,3 +93,17 @@ class LRUCache(Generic[KeyT, ValueT]):
         """
         self._touch(key)
         return self.itemMap[key]
+    
+if __name__ == '__main__':
+    cache = LRUCache(size = 2) # we only need to remember two values
+
+    def fib(n: int):
+        if n<= 1:
+            return n
+        
+        if not cache.contains(n):
+            cache.put(n, fib(n - 2) + fib(n - 1)) # the order of these fib calls matters
+        
+        return cache.get(n)
+
+    print(fib(100))
