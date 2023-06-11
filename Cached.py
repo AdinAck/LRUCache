@@ -9,7 +9,8 @@ Adin Ackerman
 from __future__ import annotations
 from dataclasses import dataclass
 
-from cache.LRUCache import LRUCache
+from Testable import Testable
+from LRUCache import LRUCache
 
 from typing import TypeVar, Callable
 
@@ -45,7 +46,7 @@ class _Signature:
         
         return pair_check
 
-class Cached(LRUCache[_Signature, ValueT]):
+class Cached(LRUCache[_Signature, ValueT], Testable):
     """
     Decorator for `LRUCache` for any Callable.
     
@@ -70,6 +71,56 @@ class Cached(LRUCache[_Signature, ValueT]):
             
             return self.get(s)
         return dispatch
+    
+    @Testable.test
+    def args() -> bool:
+        cache = Cached(size = 5)
+        
+        @cache
+        def foo(i: int, j: str) -> str:
+            return f'{j}: {i}'
+        
+        strs = ['hello', 'good', 'day', 'tomorrow', 'for', 'the', 'time', '$^!%@']
+        
+        for i, j in enumerate(strs):
+            foo(i, j)
+            
+        if not len(cache.itemList) == 5:
+            return False
+        
+        for i, j in enumerate(strs):
+            key = _Signature((i, j), {})
+            if not cache.contains(key): continue
+            
+            if cache.get(key) != f'{j}: {i}':
+                return False
+        
+        return True
+    
+    @Testable.test
+    def kwargs() -> bool:
+        cache = Cached(size = 5)
+        
+        @cache
+        def foo(i: int, t: str, u: int) -> int:
+            return i + u + ord(t)
+        
+        chars = 'abcdefghijklmnopqrstuvwxyz'
+        
+        for i, c in enumerate(chars):
+            foo(i, u = 10 - i, t = c)
+            
+        if not len(cache.itemList) == 5:
+            return False
+        
+        for i, c in enumerate(chars):
+            key = _Signature((i,), {'t': c, 'u': 10 - i})
+            if not cache.contains(key): continue
+            
+            if cache.get(key) != 10 + ord(c):
+                return False
+            
+        return True
             
         
 if __name__ == '__main__':

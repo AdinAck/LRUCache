@@ -6,6 +6,8 @@ Adin Ackerman
 
 from dataclasses import dataclass, field
 
+from Testable import Testable
+
 from typing import TypeVar, Generic
 
 # types
@@ -13,7 +15,7 @@ KeyT = TypeVar('KeyT')
 ValueT = TypeVar('ValueT')
 
 @dataclass(slots = True)
-class LRUCache(Generic[KeyT, ValueT]):
+class LRUCache(Generic[KeyT, ValueT], Testable):
     """
     A generic, performant LRU cache for use with any hashable key and any value, of a specified size.
     
@@ -76,10 +78,11 @@ class LRUCache(Generic[KeyT, ValueT]):
             self._touch(key)
             return True
         
-        if len(self.itemList) == self.size:
+        self._add(key, value)
+        
+        if len(self.itemList) > self.size:
             self._evict()
         
-        self._add(key, value)
         return False
     
     def get(self, key: KeyT) -> ValueT:
@@ -93,6 +96,51 @@ class LRUCache(Generic[KeyT, ValueT]):
         """
         self._touch(key)
         return self.itemMap[key]
+    
+    
+    # testing
+    @Testable.test
+    def keep_size() -> bool:
+        cache = LRUCache(size = 5)
+        
+        for i in range(10):
+            cache.put(i, ...)
+        
+        return len(cache.itemList) == 5
+    
+    @Testable.test
+    def zero_size() -> bool:
+        cache = LRUCache(size = 0)
+        
+        cache.put(..., ...)
+        return not cache.contains(...) and len(cache.itemList) == 0
+    
+    @Testable.test
+    def lru() -> bool:
+        cache = LRUCache(size = 10)
+        
+        for i, j in zip(range(10), reversed(range(10))):
+            cache.put(i, j)
+            
+        cache.put(..., ...)
+        
+        return not cache.contains(0) and all(cache.contains(i) for i in range(1, 9))
+    
+    @Testable.test
+    def value_store() -> bool:
+        cache = LRUCache(size = 39)
+        
+        for i, j in zip(range(56), reversed(range(56))):
+            cache.put(i, j)
+            
+        for i, j in zip(range(56), reversed(range(56))):
+            if not cache.contains(i): continue
+            if not cache.get(i) == j:
+                return False
+                
+        return True
+        
+        
     
 if __name__ == '__main__':
     cache = LRUCache(size = 2) # we only need to remember two values
